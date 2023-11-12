@@ -1,6 +1,6 @@
 ARG BASE_IMAGE=dlrobson/dotfiles:latest
 
-FROM debian:bullseye-slim AS chktex
+FROM debian:bullseye-slim AS builder
 
 ###############################################################################
 # Install chktex
@@ -9,13 +9,18 @@ ARG CHKTEX_VERSION=1.7.6
 
 WORKDIR /tmp/workdir
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends g++ make wget
+    apt-get install -y --no-install-recommends g++ make wget \
+    # For latexindent dependencies
+    cpanminus make gcc libc6-dev
 RUN wget -qO- http://download.savannah.gnu.org/releases/chktex/chktex-${CHKTEX_VERSION}.tar.gz | \
     tar -xz --strip-components=1
 RUN ./configure && \
     make && \
     mv chktex /tmp && \
     rm -r *
+
+# For latexindent dependencies
+RUN cpanm -n -q --local-lib=/tmp/perl5 Log::Log4perl XString Log::Dispatch::File YAML::Tiny File::HomeDir Unicode::GCString 
 
 ###############################################################################
 # Setup base image
@@ -45,9 +50,7 @@ RUN if ! id -u ${USERNAME} > /dev/null 2>&1; then \
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     # For texlive
-    wget gnupg cpanminus \
-    # For latexindent
-    cpanminus make gcc libc6-dev && \
+    wget gnupg cpanminus && \
     apt-get autoremove -y && \
     apt-get purge -y --auto-remove && \
     apt-get clean
@@ -72,11 +75,6 @@ RUN cd /tmp/texlive && \
     perl install-tl -profile profile.txt --location ${TEXLIVE_MIRROR}
 
 ###############################################################################
-# Install latexindent dependencies
-###############################################################################
-RUN cpanm -n -q --local-lib=${HOME}/perl5 Log::Log4perl XString Log::Dispatch::File YAML::Tiny File::HomeDir Unicode::GCString 
-
-###############################################################################
 # Cleanup
 ###############################################################################
 USER root
@@ -91,12 +89,14 @@ USER ${USERNAME}
 
 ENV PATH ${PATH}:/usr/local/texlive/${TEXLIVE_VERSION}/bin/x86_64-linux:/usr/local/texlive/${TEXLIVE_VERSION}/bin/aarch64-linux:$HOME/perl5/bin
 
+COPY --from=builder /tmp/chktex /usr/local/bin/chktex
+COPY --from=builder --chown=${USERNAME} /tmp/perl5 /home/${USERNAME}/perl5
+
 RUN tlmgr install latexindent latexmk && \
     texhash && \
     rm /usr/local/texlive/${TEXLIVE_VERSION}/texmf-var/web2c/*.log && \
     rm /usr/local/texlive/${TEXLIVE_VERSION}/tlpkg/texlive.tlpdb.main.*
 
-COPY --from=chktex /tmp/chktex /usr/local/bin/chktex
 
 # Verify binaries work and have the right permissions
 RUN tlmgr version && \
