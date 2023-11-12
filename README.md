@@ -1,4 +1,4 @@
-# Create a Dev Image with the dotfiles baked in
+# Create a Dev Image
 
 Run:
 ```bash
