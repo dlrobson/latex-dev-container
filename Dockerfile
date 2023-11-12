@@ -97,7 +97,6 @@ RUN tlmgr install latexindent latexmk && \
     rm /usr/local/texlive/${TEXLIVE_VERSION}/texmf-var/web2c/*.log && \
     rm /usr/local/texlive/${TEXLIVE_VERSION}/tlpkg/texlive.tlpdb.main.*
 
-
 # Verify binaries work and have the right permissions
 RUN tlmgr version && \
     latexmk -version && \
