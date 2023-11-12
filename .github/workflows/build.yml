@@ -30,9 +30,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          build-args: |
-            UID=1000
-            GID=1000
           push: ${{ github.event_name != 'pull_request' }}
           tags: dlrobson/latex-dev-container:latest
           platforms: linux/amd64,linux/arm64
