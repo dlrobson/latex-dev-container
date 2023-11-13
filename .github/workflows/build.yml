@@ -6,6 +6,12 @@ on:
       - master
   pull_request:
 
+# This stops any running jobs when a new commit is pushed
+# Reference: https://stackoverflow.com/a/72408109
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build_image:
     name: Push Docker image to Docker Hub
@@ -30,9 +36,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          build-args: |
-            UID=1000
-            GID=1000
           push: ${{ github.event_name != 'pull_request' }}
           tags: dlrobson/latex-dev-container:latest
           platforms: linux/amd64,linux/arm64
