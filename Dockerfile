@@ -1,15 +1,15 @@
-ARG BASE_IMAGE=dlrobson/dotfiles:latest
+ARG BASE_IMAGE=ubuntu:latest
 
 FROM debian:bullseye-slim AS chktex
 
 ###############################################################################
 # Install chktex
 ###############################################################################
-ARG CHKTEX_VERSION=1.7.6
+ARG CHKTEX_VERSION=1.7.8
 
 WORKDIR /tmp/workdir
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends g++ make wget 
+    apt-get install -y --no-install-recommends g++ make wget perl
 RUN wget -qO- http://download.savannah.gnu.org/releases/chktex/chktex-${CHKTEX_VERSION}.tar.gz | \
     tar -xz --strip-components=1
 RUN ./configure && \
@@ -32,9 +32,8 @@ USER root
 # Otherwise, If the UID is not equal to the specified UID, run a usermod command to change
 # the UID.
 RUN if ! id -u ${USERNAME} > /dev/null 2>&1; then \
-    group add -g ${GID} ${USERNAME} && \
-    useradd -m -u ${UID} -g ${GID} -s /bin/zsh ${USERNAME} && \
-    echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd; \
+    groupadd -g ${GID} ${USERNAME} && \
+    useradd -m -u ${UID} -g ${GID} ${USERNAME}; \
     elif [ $(id -u ${USERNAME}) -ne ${UID} ]; then \
     usermod -u ${UID} ${USERNAME} && \
     echo "UID updated to ${UID}"; \
@@ -79,7 +78,7 @@ RUN cd /tmp/texlive && \
 ###############################################################################
 USER root
 RUN apt-get purge -y --auto-remove \
-    cpanminus make gcc libc6-dev && \
+    make gcc libc6-dev && \
     apt-get clean autoclean && \
     apt-get autoremove -y && \
     rm -rf /var/lib/{apt,dpkg,cache,log}/ /tmp/texlive /usr/local/texlive/${TEXLIVE_VERSION}/*.log

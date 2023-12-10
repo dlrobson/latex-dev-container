@@ -3,7 +3,7 @@ name: Publish Docker image
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 
 # This stops any running jobs when a new commit is pushed
@@ -13,29 +13,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build_image:
-    name: Push Docker image to Docker Hub
+  version_info:
+    name: Generate Version Info
     runs-on: ubuntu-latest
+    outputs:
+      software_version: ${{ steps.version_info.outputs.software_version }}
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
+      # We will use the date and month as the tag for the image in the format YYYY-MM.
+      # This will allow us to store older images and easily identify when they were built.
+      # I don't need finer granularity than this for my use case. This will be set in the
+      # version_info job and used in the build_image jobs
+      - id: version_info
+        run: echo "software_version=$(date +%Y-%m)" >> $GITHUB_OUTPUT
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: dlrobson
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and export to Docker
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: dlrobson/latex-dev-container:latest
-          platforms: linux/amd64,linux/arm64
+  build_image:
+    name: Build and Publish Images
+    needs: version_info
+    uses: dlrobson/dotfiles/.github/workflows/build_image_reusable.yml@master
+    with:
+      base-image: ubuntu:latest
+      image-name: latex-dev-container
+      software-version: ${{ needs.version_info.outputs.software_version }}
+    secrets:
+      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
