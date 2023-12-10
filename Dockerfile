@@ -33,8 +33,7 @@ USER root
 # the UID.
 RUN if ! id -u ${USERNAME} > /dev/null 2>&1; then \
     groupadd -g ${GID} ${USERNAME} && \
-    useradd -m -u ${UID} -g ${GID} -s /bin/zsh ${USERNAME} && \
-    echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd; \
+    useradd -m -u ${UID} -g ${GID} ${USERNAME}; \
     elif [ $(id -u ${USERNAME}) -ne ${UID} ]; then \
     usermod -u ${UID} ${USERNAME} && \
     echo "UID updated to ${UID}"; \
