@@ -1,11 +1,11 @@
-ARG BASE_IMAGE=dlrobson/dotfiles:latest
+ARG BASE_IMAGE=ubuntu:latest
 
 FROM debian:bullseye-slim AS chktex
 
 ###############################################################################
 # Install chktex
 ###############################################################################
-ARG CHKTEX_VERSION=1.7.6
+ARG CHKTEX_VERSION=1.7.8
 
 WORKDIR /tmp/workdir
 RUN apt-get update && \
@@ -32,7 +32,7 @@ USER root
 # Otherwise, If the UID is not equal to the specified UID, run a usermod command to change
 # the UID.
 RUN if ! id -u ${USERNAME} > /dev/null 2>&1; then \
-    group add -g ${GID} ${USERNAME} && \
+    groupadd -g ${GID} ${USERNAME} && \
     useradd -m -u ${UID} -g ${GID} -s /bin/zsh ${USERNAME} && \
     echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd; \
     elif [ $(id -u ${USERNAME}) -ne ${UID} ]; then \
