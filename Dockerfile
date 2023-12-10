@@ -9,7 +9,7 @@ ARG CHKTEX_VERSION=1.7.8
 
 WORKDIR /tmp/workdir
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends g++ make wget 
+    apt-get install -y --no-install-recommends g++ make wget perl
 RUN wget -qO- http://download.savannah.gnu.org/releases/chktex/chktex-${CHKTEX_VERSION}.tar.gz | \
     tar -xz --strip-components=1
 RUN ./configure && \
@@ -78,7 +78,7 @@ RUN cd /tmp/texlive && \
 ###############################################################################
 USER root
 RUN apt-get purge -y --auto-remove \
-    cpanminus make gcc libc6-dev && \
+    make gcc libc6-dev && \
     apt-get clean autoclean && \
     apt-get autoremove -y && \
     rm -rf /var/lib/{apt,dpkg,cache,log}/ /tmp/texlive /usr/local/texlive/${TEXLIVE_VERSION}/*.log
